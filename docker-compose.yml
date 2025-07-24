@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  carrera-bot:
+    build: .
+    container_name: carrera-hybrid-bot
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Persistente Datenspeicherung für Channel-Konfigurationen
+      - ./data:/app/data
+      # Log-Dateien
+      - ./logs:/app/logs
+    restart: unless-stopped
+    
+    # Gesundheitsprüfung
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('bot.log') else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Ressourcen-Limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    
+    # Netzwerk für mögliche zukünftige Services
+    networks:
+      - carrera-network
+
+networks:
+  carrera-network:
+    driver: bridge
